@@ -15,7 +15,7 @@ To compile mqtree you need:
 # Compiling
 
 ```
-$ git clone https://github.com/processone/mqtree.git
+$ git clone ssh://git@git.process-one.net:7999/ebe/mqtree.git
 $ cd mqtree
 $ make
 ```
@@ -83,7 +83,7 @@ Deletes all filters from `Tree`.
 
 ## size/1
 ```erlang
--spec size(Tree :: tree()) -> ok.
+-spec size(Tree :: tree()) -> non_neg_integer().
 ```
 Returns the size of `Tree`. That is, the number of filters in the
 tree (irrespective of their reference counters).
