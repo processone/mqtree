@@ -1,0 +1,37 @@
+%%%-------------------------------------------------------------------
+%%%
+%%% ejabberd Business Edition, Copyright (C) 2002-2018   ProcessOne
+%%%
+%%% The ejabberd software is the exclusive property of the licensor
+%%% ProcessOne. It is protected by the law on copyright and
+%%% international conventions. As a result, the dealer
+%%% recognizes that will make every effort to ensure the confidentiality
+%%% on the software. It is recalled that a violation of the rights of
+%%% authors of the software is an infringement and that any
+%%% counterfeit is punishable in France by Article L339-2 of the Code of
+%%% Intellectual property and punishable by three years imprisonment and
+%%% 300000 euros.
+%%%
+%%% Any infringement liable to be so qualified and
+%%% would be caused by third parties and whose dealer has knowledge
+%%% should be terminated by the licensor that it will make its case
+%%% personal conduct of the proceedings. Any allegation of infringement
+%%% formed against the dealer because of the use of the Software will
+%%% be brought to the knowledge of the licensor which will assist
+%%% in defense of the dealer in the manner and form that
+%%% see fit and fix alone.
+%%%
+%%%----------------------------------------------------------------------
+{application, mqtree,
+ [
+  {description, "Index tree for MQTT topic filters"},
+  {vsn, "1.0.0"},
+  {registered, []},
+  {applications, [kernel, stdlib]},
+  {env, []}
+ ]}.
+
+%% Local Variables:
+%% mode: erlang
+%% End:
+%% vim: set filetype=erlang tabstop=8:
