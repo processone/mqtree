@@ -40,10 +40,19 @@ typedef struct __tree_t {
 
 typedef struct {
   tree_t *tree;
+  char *name;
   ErlNifRWLock *lock;
 } state_t;
 
+typedef struct {
+  char *name;
+  state_t *state;
+  UT_hash_handle hh;
+} registry_t;
+
 static ErlNifResourceType *tree_state_t = NULL;
+static registry_t *registry = NULL;
+static ErlNifRWLock *registry_lock = NULL;
 
 /****************************************************************
  *                   MQTT Tree Manipulation                     *
@@ -171,6 +180,73 @@ int tree_refc(tree_t *tree, char *path, size_t i, size_t size) {
     }
   } else
     return tree->refc;
+}
+
+/****************************************************************
+ *                        Registration                          *
+ ****************************************************************/
+int register_tree(char *name, state_t *state) {
+  registry_t *entry, *found;
+  int ret;
+
+  entry = malloc(sizeof(registry_t));
+  if (entry) {
+    entry->name = malloc(strlen(name) + 1);
+    entry->state = state;
+    if (entry->name) {
+      strcpy(entry->name, name);
+      enif_rwlock_rwlock(registry_lock);
+      HASH_FIND_STR(registry, name, found);
+      if (found) {
+	free(entry->name);
+	free(entry);
+	ret = EINVAL;
+      } else {
+	if (state->name) {
+	  /* Unregistering previously registered name */
+	  HASH_FIND_STR(registry, state->name, found);
+	  if (found) {
+	    HASH_DEL(registry, found);
+	    enif_release_resource(state);
+	    free(found->name);
+	    free(found);
+	  }
+	}
+	enif_keep_resource(state);
+	HASH_ADD_STR(registry, name, entry);
+	state->name = entry->name;
+	ret = 0;
+      }
+      enif_rwlock_rwunlock(registry_lock);
+    } else {
+      free(entry);
+      ret = ENOMEM;
+    }
+  } else
+    ret = ENOMEM;
+
+  return ret;
+}
+
+int unregister_tree(char *name) {
+  registry_t *entry;
+  int ret;
+
+  enif_rwlock_rwlock(registry_lock);
+  HASH_FIND_STR(registry, name, entry);
+  if (entry) {
+    HASH_DEL(registry, entry);
+    entry->state->name = NULL;
+    enif_release_resource(entry->state);
+    free(entry->name);
+    free(entry);
+    ret = 0;
+  } else {
+    ret = EINVAL;
+  }
+  enif_rwlock_rwunlock(registry_lock);
+
+  return ret;
 }
 
 /****************************************************************
@@ -315,14 +391,23 @@ static void destroy_tree_state(ErlNifEnv *env, void *data) {
  *                      NIF definitions                         *
  ****************************************************************/
 static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM max) {
-  ErlNifResourceFlags flags = ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER;
-  tree_state_t = enif_open_resource_type(env, NULL, "mqtree_state",
-					 destroy_tree_state,
-					 flags, NULL);
-  return 0;
+  registry_lock = enif_rwlock_create("mqtree_registry");
+  if (registry_lock) {
+    ErlNifResourceFlags flags = ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER;
+    tree_state_t = enif_open_resource_type(env, NULL, "mqtree_state",
+					   destroy_tree_state,
+					   flags, NULL);
+    return 0;
+  }
+  return ENOMEM;
 }
 
-static void unload(ErlNifEnv* env, void* priv) {}
+static void unload(ErlNifEnv* env, void* priv) {
+  if (registry_lock) {
+    enif_rwlock_destroy(registry_lock);
+    registry_lock = NULL;
+  }
+}
 
 static ERL_NIF_TERM new_0(ErlNifEnv* env, int argc,
 			  const ERL_NIF_TERM argv[])
@@ -517,6 +602,82 @@ static ERL_NIF_TERM dump_1(ErlNifEnv* env, int argc,
   return result;
 }
 
+static ERL_NIF_TERM register_2(ErlNifEnv* env, int argc,
+			       const ERL_NIF_TERM argv[])
+{
+  state_t *state;
+  unsigned int len;
+  int ret;
+
+  if (!enif_get_atom_length(env, argv[0], &len, ERL_NIF_LATIN1) ||
+      !enif_get_resource(env, argv[1], tree_state_t, (void *) &state))
+    return raise(env, EINVAL);
+
+  char name[len+1];
+  enif_get_atom(env, argv[0], name, len+1, ERL_NIF_LATIN1);
+  ret = register_tree(name, state);
+  if (ret)
+    return raise(env, ret);
+  else
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM unregister_1(ErlNifEnv* env, int argc,
+				 const ERL_NIF_TERM argv[])
+{
+  unsigned int len;
+  int ret;
+
+  if (!enif_get_atom_length(env, argv[0], &len, ERL_NIF_LATIN1))
+    return raise(env, EINVAL);
+
+  char name[len+1];
+  enif_get_atom(env, argv[0], name, len+1, ERL_NIF_LATIN1);
+  ret = unregister_tree(name);
+  if (ret)
+    return raise(env, ret);
+  else
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM whereis_1(ErlNifEnv* env, int argc,
+			      const ERL_NIF_TERM argv[])
+{
+  unsigned int len;
+  registry_t *entry;
+  ERL_NIF_TERM result;
+
+  if (!enif_get_atom_length(env, argv[0], &len, ERL_NIF_LATIN1))
+    return raise(env, EINVAL);
+
+  char name[len+1];
+  enif_get_atom(env, argv[0], name, len+1, ERL_NIF_LATIN1);
+  enif_rwlock_rlock(registry_lock);
+  HASH_FIND_STR(registry, name, entry);
+  if (entry)
+    result = enif_make_resource(env, entry->state);
+  else
+    result = enif_make_atom(env, "undefined");
+  enif_rwlock_runlock(registry_lock);
+
+  return result;
+}
+
+static ERL_NIF_TERM registered_0(ErlNifEnv* env, int argc,
+				 const ERL_NIF_TERM argv[])
+{
+  registry_t *entry, *iter;
+  ERL_NIF_TERM result = enif_make_list(env, 0);
+
+  enif_rwlock_rlock(registry_lock);
+  HASH_ITER(hh, registry, entry, iter) {
+    result = enif_make_list_cell(env, enif_make_atom(env, entry->name), result);
+  }
+  enif_rwlock_runlock(registry_lock);
+
+  return result;
+}
+
 static ErlNifFunc nif_funcs[] =
   {
     {"new", 0, new_0},
@@ -528,7 +689,11 @@ static ErlNifFunc nif_funcs[] =
     {"size", 1, size_1},
     {"is_empty", 1, is_empty_1},
     {"to_list", 1, to_list_1},
-    {"dump", 1, dump_1}
+    {"dump", 1, dump_1},
+    {"register", 2, register_2},
+    {"unregister", 1, unregister_1},
+    {"whereis", 1, whereis_1},
+    {"registered", 0, registered_0}
   };
 
 ERL_NIF_INIT(mqtree, nif_funcs, load, NULL, NULL, unload)

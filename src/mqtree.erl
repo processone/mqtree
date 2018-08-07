@@ -28,6 +28,7 @@
 %% API
 -export([new/0, insert/2, delete/2, match/2, refc/2,
 	 clear/1, size/1, is_empty/1]).
+-export([register/2, unregister/1, whereis/1, registered/0]).
 %% For debugging
 -export([dump/1, to_list/1]).
 
@@ -68,6 +69,22 @@ size(_Tree) ->
 
 -spec is_empty(tree()) -> boolean().
 is_empty(_Tree) ->
+    erlang:nif_error({nif_not_loaded, ?MODULE}).
+
+-spec register(atom(), tree()) -> ok.
+register(_Name, _Tree) ->
+    erlang:nif_error({nif_not_loaded, ?MODULE}).
+
+-spec unregister(atom()) -> ok.
+unregister(_Name) ->
+    erlang:nif_error({nif_not_loaded, ?MODULE}).
+
+-spec whereis(atom()) -> tree() | undefined.
+whereis(_Name) ->
+    erlang:nif_error({nif_not_loaded, ?MODULE}).
+
+-spec registered() -> [atom()].
+registered() ->
     erlang:nif_error({nif_not_loaded, ?MODULE}).
 
 %%%===================================================================

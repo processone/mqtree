@@ -220,6 +220,62 @@ match_plus_test() ->
     ?assertEqual([<<"+/+">>, <<"+/b">>], mqtree:match(T, "x/b")),
     ?assertEqual(Filter, lists:sort(mqtree:match(T, "a/b"))).
 
+whereis_non_existent_test() ->
+    ?assertEqual(undefined, mqtree:whereis(test_tree)).
+
+unregister_non_existent_test() ->
+    ?assertError(badarg, mqtree:unregister(test_tree)).
+
+register_test() ->
+    T = mqtree:new(),
+    ?assertEqual(ok, mqtree:register(test_tree, T)),
+    ?assertEqual(T, mqtree:whereis(test_tree)),
+    ?assertEqual(ok, mqtree:unregister(test_tree)).
+
+double_register_test() ->
+    T = mqtree:new(),
+    ?assertEqual(ok, mqtree:register(test_tree, T)),
+    ?assertError(badarg, mqtree:register(test_tree, T)),
+    ?assertEqual(ok, mqtree:unregister(test_tree)).
+
+unregister_test() ->
+    T = mqtree:new(),
+    ?assertEqual(ok, mqtree:register(test_tree, T)),
+    ?assertEqual(ok, mqtree:unregister(test_tree)),
+    ?assertEqual(undefined, mqtree:whereis(test_tree)).
+
+double_unregister_test() ->
+    T = mqtree:new(),
+    ?assertEqual(ok, mqtree:register(test_tree, T)),
+    ?assertEqual(ok, mqtree:unregister(test_tree)),
+    ?assertError(badarg, mqtree:unregister(test_tree)).
+
+rename_test() ->
+    T = mqtree:new(),
+    ?assertEqual(ok, mqtree:register(test_tree_1, T)),
+    ?assertEqual(ok, mqtree:register(test_tree_2, T)),
+    ?assertEqual(undefined, mqtree:whereis(test_tree_1)),
+    ?assertError(badarg, mqtree:unregister(test_tree_1)),
+    ?assertEqual(T, mqtree:whereis(test_tree_2)),
+    ?assertEqual(ok, mqtree:unregister(test_tree_2)).
+
+registered_test() ->
+    Names = [list_to_atom("test_tree_" ++ integer_to_list(I))
+	     || I <- lists:seq(1, 9)],
+    lists:foldl(
+      fun(Name, Acc) ->
+	      ?assertEqual(Acc, lists:sort(mqtree:registered())),
+	      T = mqtree:new(),
+	      ?assertEqual(ok, mqtree:register(Name, T)),
+	      [Name|Acc]
+      end, [], lists:reverse(Names)),
+    lists:foldl(
+      fun(_, [Name|Acc]) ->
+	      ?assertEqual(ok, mqtree:unregister(Name)),
+	      ?assertEqual(Acc, lists:sort(mqtree:registered())),
+	      Acc
+      end, Names, Names).
+
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
