@@ -105,8 +105,10 @@ int tree_add(tree_t *root, char *path, size_t size) {
 	HASH_ADD_STR(t->sub, key, new);
 	i += len;
 	t = new;
-      } else
+      } else {
+	free(path);
 	return errno;
+      }
     }
   }
 
