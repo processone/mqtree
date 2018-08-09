@@ -27,7 +27,7 @@
 
 %% API
 -export([new/0, insert/2, delete/2, match/2, refc/2,
-	 clear/1, size/1, is_empty/1]).
+         clear/1, size/1, is_empty/1]).
 -export([register/2, unregister/1, whereis/1, registered/0]).
 %% For debugging
 -export([dump/1, to_list/1]).
@@ -91,7 +91,7 @@ registered() ->
 %%% For testing/debugging
 %%%===================================================================
 -type tree_node() :: {string(), string() | none,
-		      non_neg_integer(), [tree_node()]}.
+                      non_neg_integer(), [tree_node()]}.
 
 -spec dump(tree()) -> [tree_node()].
 dump(_Tree) ->
@@ -108,7 +108,7 @@ load_nif() ->
     Path = p1_nif_utils:get_so_path(?MODULE, [?MODULE], atom_to_list(?MODULE)),
     case erlang:load_nif(Path, 0) of
         ok -> ok;
-	{error, {upgrade, _}} -> ok;
+        {error, {upgrade, _}} -> ok;
         {error, {Reason, Text}} ->
             error_logger:error_msg("Failed to load NIF ~s: ~s (~p)",
                                    [Path, Text, Reason]),

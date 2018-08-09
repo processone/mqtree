@@ -73,10 +73,10 @@ tree_t *tree_new(char *key, size_t len) {
     if (key && len) {
       tree->key = enif_alloc(len);
       if (tree->key) {
-	memcpy(tree->key, key, len);
+        memcpy(tree->key, key, len);
       } else {
-	enif_free(tree);
-	tree = NULL;
+        enif_free(tree);
+        tree = NULL;
       }
     }
   }
@@ -120,11 +120,11 @@ int tree_add(tree_t *root, char *path, size_t size) {
     } else {
       new = tree_new(path+i, len);
       if (new) {
-	HASH_ADD_STR(t->sub, key, new);
-	i += len;
-	t = new;
+        HASH_ADD_STR(t->sub, key, new);
+        i += len;
+        t = new;
       } else
-	return ENOMEM;
+        return ENOMEM;
     }
   }
 
@@ -133,8 +133,8 @@ int tree_add(tree_t *root, char *path, size_t size) {
     if (t->val) {
       t->val[size] = 0;
       for (i=0; i<size; i++) {
-	char c = path[i];
-	t->val[i] = c ? c : '/';
+        char c = path[i];
+        t->val[i] = c ? c : '/';
       }
     } else
       return ENOMEM;
@@ -152,8 +152,8 @@ int tree_del(tree_t *root, char *path, size_t i, size_t size) {
       i += strlen(path+i) + 1;
       int deleted = tree_del(found, path, i, size);
       if (deleted) {
-	HASH_DEL(root->sub, found);
-	tree_free(found);
+        HASH_DEL(root->sub, found);
+        tree_free(found);
       }
     }
   } else if (root->refc) {
@@ -229,7 +229,7 @@ int register_tree(char *name, state_t *state) {
       /* Unregistering previously registered name */
       HASH_FIND_STR(registry, state->name, found);
       if (found)
-	delete_registry_entry(found);
+        delete_registry_entry(found);
     }
     enif_keep_resource(state);
     HASH_ADD_STR(registry, name, entry);
@@ -274,7 +274,7 @@ static ERL_NIF_TERM cons(ErlNifEnv *env, char *str, ERL_NIF_TERM tail)
 }
 
 static void match(ErlNifEnv *env, tree_t *root,
-		  char *path, size_t i, size_t size, ERL_NIF_TERM *acc)
+                  char *path, size_t i, size_t size, ERL_NIF_TERM *acc)
 {
   tree_t *found;
   size_t len = 0;
@@ -313,8 +313,8 @@ static void to_list(ErlNifEnv *env, tree_t *root, ERL_NIF_TERM *acc)
       ERL_NIF_TERM val;
       unsigned char *buf = enif_make_new_binary(env, len, &val);
       if (buf) {
-	memcpy(buf, found->val, len);
-	*acc = enif_make_list_cell(env, enif_make_tuple2(env, val, refc), *acc);
+        memcpy(buf, found->val, len);
+        *acc = enif_make_list_cell(env, enif_make_tuple2(env, val, refc), *acc);
       }
     };
     to_list(env, found, acc);
@@ -397,8 +397,8 @@ static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM max) {
   if (registry_lock) {
     ErlNifResourceFlags flags = ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER;
     tree_state_t = enif_open_resource_type(env, NULL, "mqtree_state",
-					   destroy_tree_state,
-					   flags, NULL);
+                                           destroy_tree_state,
+                                           flags, NULL);
     return 0;
   }
   return ENOMEM;
@@ -412,7 +412,7 @@ static void unload(ErlNifEnv* env, void* priv) {
 }
 
 static ERL_NIF_TERM new_0(ErlNifEnv* env, int argc,
-			  const ERL_NIF_TERM argv[])
+                          const ERL_NIF_TERM argv[])
 {
   ERL_NIF_TERM result;
   state_t *state = init_tree_state(env);
@@ -426,7 +426,7 @@ static ERL_NIF_TERM new_0(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM insert_2(ErlNifEnv* env, int argc,
-			     const ERL_NIF_TERM argv[])
+                             const ERL_NIF_TERM argv[])
 {
   state_t *state;
   ErlNifBinary path_bin;
@@ -451,7 +451,7 @@ static ERL_NIF_TERM insert_2(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM delete_2(ErlNifEnv* env, int argc,
-			     const ERL_NIF_TERM argv[])
+                             const ERL_NIF_TERM argv[])
 {
   state_t *state;
   ErlNifBinary path_bin;
@@ -473,7 +473,7 @@ static ERL_NIF_TERM delete_2(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM match_2(ErlNifEnv* env, int argc,
-			    const ERL_NIF_TERM argv[])
+                            const ERL_NIF_TERM argv[])
 {
   state_t *state;
   ErlNifBinary path_bin;
@@ -496,7 +496,7 @@ static ERL_NIF_TERM match_2(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM refc_2(ErlNifEnv* env, int argc,
-			   const ERL_NIF_TERM argv[])
+                           const ERL_NIF_TERM argv[])
 {
   state_t *state;
   ErlNifBinary path_bin;
@@ -518,7 +518,7 @@ static ERL_NIF_TERM refc_2(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM clear_1(ErlNifEnv* env, int argc,
-			    const ERL_NIF_TERM argv[])
+                            const ERL_NIF_TERM argv[])
 {
   state_t *state;
   if (!enif_get_resource(env, argv[0], tree_state_t, (void *) &state))
@@ -532,7 +532,7 @@ static ERL_NIF_TERM clear_1(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM size_1(ErlNifEnv* env, int argc,
-			   const ERL_NIF_TERM argv[])
+                           const ERL_NIF_TERM argv[])
 {
   state_t *state;
   size_t size = 0;
@@ -547,7 +547,7 @@ static ERL_NIF_TERM size_1(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM is_empty_1(ErlNifEnv* env, int argc,
-			       const ERL_NIF_TERM argv[])
+                               const ERL_NIF_TERM argv[])
 {
   state_t *state;
   if (!enif_get_resource(env, argv[0], tree_state_t, (void *) &state))
@@ -561,7 +561,7 @@ static ERL_NIF_TERM is_empty_1(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM to_list_1(ErlNifEnv* env, int argc,
-			      const ERL_NIF_TERM argv[])
+                              const ERL_NIF_TERM argv[])
 {
   state_t *state;
   ERL_NIF_TERM result = enif_make_list(env, 0);
@@ -577,7 +577,7 @@ static ERL_NIF_TERM to_list_1(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM dump_1(ErlNifEnv* env, int argc,
-			   const ERL_NIF_TERM argv[])
+                           const ERL_NIF_TERM argv[])
 {
   state_t *state;
   if (!enif_get_resource(env, argv[0], tree_state_t, (void *) &state))
@@ -591,7 +591,7 @@ static ERL_NIF_TERM dump_1(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM register_2(ErlNifEnv* env, int argc,
-			       const ERL_NIF_TERM argv[])
+                               const ERL_NIF_TERM argv[])
 {
   state_t *state;
   unsigned int len;
@@ -614,7 +614,7 @@ static ERL_NIF_TERM register_2(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM unregister_1(ErlNifEnv* env, int argc,
-				 const ERL_NIF_TERM argv[])
+                                 const ERL_NIF_TERM argv[])
 {
   unsigned int len;
   int ret;
@@ -632,7 +632,7 @@ static ERL_NIF_TERM unregister_1(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM whereis_1(ErlNifEnv* env, int argc,
-			      const ERL_NIF_TERM argv[])
+                              const ERL_NIF_TERM argv[])
 {
   unsigned int len;
   registry_t *entry;
@@ -655,7 +655,7 @@ static ERL_NIF_TERM whereis_1(ErlNifEnv* env, int argc,
 }
 
 static ERL_NIF_TERM registered_0(ErlNifEnv* env, int argc,
-				 const ERL_NIF_TERM argv[])
+                                 const ERL_NIF_TERM argv[])
 {
   registry_t *entry, *iter;
   ERL_NIF_TERM result = enif_make_list(env, 0);
