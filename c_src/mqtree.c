@@ -27,6 +27,15 @@
 #include <errno.h>
 #include "uthash.h"
 
+void __free(void *ptr, size_t size) {
+  enif_free(ptr);
+}
+
+#undef uthash_malloc
+#undef uthash_free
+#define uthash_malloc enif_alloc
+#define uthash_free __free
+
 /****************************************************************
  *               Structures/Globals definitions                 *
  ****************************************************************/
