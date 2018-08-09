@@ -26,7 +26,8 @@ $ make
 ```erlang
 -spec new() -> tree().
 ```
-Creates new tree. Note that the tree is mutable just like ETS.
+Creates new tree. The tree is mutable just like ETS, so there is
+no need to keep its updated version between calls.
 The created tree gets destroyed when it's garbage collected.
 
 **NOTE**: a registered tree (see [register/2](#register2)) is
