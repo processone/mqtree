@@ -124,7 +124,7 @@ int tree_add(tree_t *root, char *path, size_t size) {
 	i += len;
 	t = new;
       } else
-	return errno;
+	return ENOMEM;
     }
   }
 
@@ -137,7 +137,7 @@ int tree_add(tree_t *root, char *path, size_t size) {
 	t->val[i] = c ? c : '/';
       }
     } else
-      return errno;
+      return ENOMEM;
   }
   t->refc++;
   return 0;
@@ -359,8 +359,7 @@ void prep_path(char *path, ErlNifBinary *bin) {
   path[bin->size] = 0;
   for (i=0; i<bin->size; i++) {
     c = bin->data[i];
-    if (c == '/') path[i] = 0;
-    else path[i] = c;
+    path[i] = (c == '/') ? 0 : c;
   }
 }
 
