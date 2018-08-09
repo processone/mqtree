@@ -30,6 +30,8 @@ Creates new tree. The tree is mutable just like ETS, so there is
 no need to keep its updated version between calls.
 The created tree gets destroyed when it's garbage collected.
 
+Complexity: `O(1)`.
+
 **NOTE**: a registered tree (see [register/2](#register2)) is
 not a subject for garbage collection until [unregister/1](#unregister1)
 is called **explicitly**.
@@ -43,6 +45,8 @@ The reference counter is increased every time when the same
 filter is inserted into the tree. The reference counter is decreased
 when the filter is deleted, see [delete/2](#delete2).
 
+Complexity: `O(H)` where `H` is the number of slashes (`/`) in `Filter`.
+
 **NOTE**: no checks are performed on the filter being inserted:
 it's up to the caller to check if the filter conforms to the MQTT
 specification.
@@ -53,6 +57,8 @@ specification.
 ```
 Deletes `Filter` from `Tree` and decreases its reference counter.
 Nothing is done if the filter is not found in the tree.
+
+Complexity: `O(H)` where `H` is the number of slashes (`/`) in `Filter`.
 
 **NOTE**: no checks are performed on the filter being deleted:
 it's up to the caller to check if the filter conforms to the MQTT
@@ -65,6 +71,13 @@ specification.
 Finds filters in `Tree` matching `Path` according to the MQTT
 specification.
 
+Complexity: `O(2^H)` worst case, where `H` is the number of slashes (`/`) in `Path`.
+Note that the worst case complexity is only achieved when an attacker forces to
+store in the tree a massive amount of filters containing `+` meta-symbol. The
+obvious protection is to restrict the filter depth. Another approach is to
+make filter "deduplication" during subscription registration, e.g. filters
+`a/+`, `+/b` and `+/+` should be "merged" into single `+/+`.
+
 **NOTE**: no checks are performed on the path being matched:
 it's up to the caller to check if the path conforms to the MQTT
 specification.
@@ -76,6 +89,8 @@ specification.
 Returns the reference counter of `Filter` in `Tree`. In particular,
 zero (0) is returned if the filter is not found in the tree.
 
+Complexity: `O(H)` where `H` is the number of slashes (`/`) in `Filter`.
+
 **NOTE**: no checks are performed on the filter being searched:
 it's up to the caller to check if the filter conforms to the MQTT
 specification.
@@ -86,6 +101,8 @@ specification.
 ```
 Deletes all filters from `Tree`.
 
+Complexity: `O(N)` where `N` is the number of filters in the tree.
+
 ## size/1
 ```erlang
 -spec size(Tree :: tree()) -> non_neg_integer().
@@ -93,11 +110,15 @@ Deletes all filters from `Tree`.
 Returns the size of `Tree`. That is, the number of filters in the
 tree (irrespective of their reference counters).
 
+Complexity: `O(N)` where `N` is the number of filters in the tree.
+
 ## is_empty/1
 ```erlang
 -spec is_empty(Tree :: tree()) -> boolean().
 ```
 Returns `true` if `Tree` holds no filters. Returns `false` otherwise.
+
+Complexity: `O(1)`.
 
 ## register/2
 ```erlang
@@ -113,6 +134,8 @@ to [whereis/1](#whereis1). Fails with `badarg` exception if:
 It is safe to register already registered tree to another name. In this
 case the old name will be freed automatically.
 
+Complexity: `O(1)`.
+
 **NOTE**: a registered tree is not a subject for garbage collection.
 You must call [unregister/1](#unregister1) **explicitly** if you want
 the tree to be freed by garbage collector.
@@ -124,8 +147,12 @@ the tree to be freed by garbage collector.
 Removes the registered name `RegName` associated with a tree.
 Fails with `badarg` exception if `RegName` is not a registered name.
 
+Complexity: `O(1)`.
+
 ## whereis/1
 ```erlang
 -spec whereis(RegName :: atom()) -> Tree :: tree() | undefined.
 ```
 Returns `Tree` with registered name `RegName`. Returns `undefined` otherwise.
+
+Complexity: `O(1)`.
