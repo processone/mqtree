@@ -26,19 +26,19 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -define(assertTree(L),
-	case L of
-	    [] ->
-		?assertEqual([], mqtree:dump(T)),
-		?assertEqual([], mqtree:to_list(T));
-	    _ ->
-		?assertEqual(L, lists:sort(mqtree:to_list(T)))
-	end).
+        case L of
+            [] ->
+                ?assertEqual([], mqtree:dump(T)),
+                ?assertEqual([], mqtree:to_list(T));
+            _ ->
+                ?assertEqual(L, lists:sort(mqtree:to_list(T)))
+        end).
 
 -define(assertInsert(E),
-	?assertEqual(ok, mqtree:insert(T, E))).
+        ?assertEqual(ok, mqtree:insert(T, E))).
 
 -define(assertDelete(E),
-	?assertEqual(ok, mqtree:delete(T, E))).
+        ?assertEqual(ok, mqtree:delete(T, E))).
 
 %%%===================================================================
 %%% Tests
@@ -86,52 +86,52 @@ insert_then_delete_shuffle_test() ->
     Check = lists:sort(rand_paths()),
     lists:foldl(
       fun(insert, Refc) ->
-	      lists:foreach(
-		fun(Path) -> ?assertInsert(Path) end,
-		rand_paths()),
-	      Refc1 = Refc+1,
-	      ?assertTree([{P, Refc1} || P <- Check]),
-	      Refc1;
-	 (delete, Refc) ->
-	      lists:foreach(
-		fun(Path) -> ?assertDelete(Path) end,
-		rand_paths()),
-	      Refc1 = Refc-1,
-	      case Refc1 of
-		  0 ->
-		      ?assertTree([]);
-		  _ ->
-		      ?assertTree([{P, Refc1} || P <- Check])
-	      end,
-	      Refc1
+              lists:foreach(
+                fun(Path) -> ?assertInsert(Path) end,
+                rand_paths()),
+              Refc1 = Refc+1,
+              ?assertTree([{P, Refc1} || P <- Check]),
+              Refc1;
+         (delete, Refc) ->
+              lists:foreach(
+                fun(Path) -> ?assertDelete(Path) end,
+                rand_paths()),
+              Refc1 = Refc-1,
+              case Refc1 of
+                  0 ->
+                      ?assertTree([]);
+                  _ ->
+                      ?assertTree([{P, Refc1} || P <- Check])
+              end,
+              Refc1
       end, 0, rand_funs()).
 
 refc_test() ->
     T = mqtree:new(),
     lists:foreach(
       fun(Refc) ->
-	      lists:foreach(
-		fun(P) ->
-			?assertEqual(Refc, mqtree:refc(T, P)),
-			?assertInsert(P)
-		end, rand_paths())
+              lists:foreach(
+                fun(P) ->
+                        ?assertEqual(Refc, mqtree:refc(T, P)),
+                        ?assertInsert(P)
+                end, rand_paths())
       end, lists:seq(0, 5)),
     lists:foreach(
       fun(Refc) ->
-	      lists:foreach(
-		fun(P) ->
-			?assertDelete(P),
-			?assertEqual(Refc, mqtree:refc(T, P))
-		end, rand_paths())
+              lists:foreach(
+                fun(P) ->
+                        ?assertDelete(P),
+                        ?assertEqual(Refc, mqtree:refc(T, P))
+                end, rand_paths())
       end, lists:seq(5, 0, -1)).
 
 clear_test() ->
     T = mqtree:new(),
     lists:foreach(
       fun(_) ->
-	      lists:foreach(fun(P) -> ?assertInsert(P) end, rand_paths()),
-	      ?assertEqual(ok, mqtree:clear(T)),
-	      ?assertTree([])
+              lists:foreach(fun(P) -> ?assertInsert(P) end, rand_paths()),
+              ?assertEqual(ok, mqtree:clear(T)),
+              ?assertTree([])
       end, lists:seq(1, 10)).
 
 clear_empty_test() ->
@@ -145,8 +145,8 @@ size_test() ->
     Paths = rand_paths(),
     lists:foreach(
       fun(_) ->
-	      lists:foreach(fun(P) -> ?assertInsert(P) end, rand_paths()),
-	      ?assert(mqtree:size(T) == length(Paths))
+              lists:foreach(fun(P) -> ?assertInsert(P) end, rand_paths()),
+              ?assert(mqtree:size(T) == length(Paths))
       end, [1,2,3]),
     ?assertEqual(ok, mqtree:clear(T)),
     ?assertEqual(0, mqtree:size(T)).
@@ -155,8 +155,8 @@ delete_non_existent_test() ->
     T = mqtree:new(),
     lists:foreach(
       fun(_) ->
-	      lists:foreach(fun(P) -> ?assertDelete(P) end, rand_paths()),
-	      ?assertTree([])
+              lists:foreach(fun(P) -> ?assertDelete(P) end, rand_paths()),
+              ?assertTree([])
       end, lists:seq(1, 10)).
 
 insert_then_delete_non_existent_test() ->
@@ -166,26 +166,26 @@ insert_then_delete_non_existent_test() ->
     lists:foreach(fun(P) -> ?assertInsert(P) end, Inserts),
     lists:foreach(
       fun(_) ->
-	      lists:foreach(fun(P) -> ?assertDelete(P) end, rand_paths()),
-	      ?assertTree(Check)
+              lists:foreach(fun(P) -> ?assertDelete(P) end, rand_paths()),
+              ?assertTree(Check)
       end, lists:seq(1, 10)).
 
 match_all_test() ->
     T = mqtree:new(),
     lists:foreach(
       fun(_) ->
-	      ?assertInsert("#"),
-	      lists:foreach(
-		fun(P) ->
-			?assertEqual([<<"#">>], mqtree:match(T, P))
-		end, rand_paths())
+              ?assertInsert("#"),
+              lists:foreach(
+                fun(P) ->
+                        ?assertEqual([<<"#">>], mqtree:match(T, P))
+                end, rand_paths())
       end, lists:seq(1, 10)).
 
 match_none_test() ->
     T = mqtree:new(),
     lists:foreach(
       fun(P) ->
-	      ?assertEqual([], mqtree:match(T, P))
+              ?assertEqual([], mqtree:match(T, P))
       end, rand_paths()).
 
 match_exact_test() ->
@@ -193,7 +193,7 @@ match_exact_test() ->
     lists:foreach(fun(P) -> ?assertInsert(P) end, rand_paths()),
     lists:foreach(
       fun(P) ->
-	      ?assertEqual([P], mqtree:match(T, P))
+              ?assertEqual([P], mqtree:match(T, P))
       end, rand_paths()).
 
 match_tail_test() ->
@@ -272,19 +272,19 @@ register_undefined_test() ->
 
 registered_test() ->
     Names = [list_to_atom("test_tree_" ++ integer_to_list(I))
-	     || I <- lists:seq(1, 9)],
+             || I <- lists:seq(1, 9)],
     lists:foldl(
       fun(Name, Acc) ->
-	      ?assertEqual(Acc, lists:sort(mqtree:registered())),
-	      T = mqtree:new(),
-	      ?assertEqual(ok, mqtree:register(Name, T)),
-	      [Name|Acc]
+              ?assertEqual(Acc, lists:sort(mqtree:registered())),
+              T = mqtree:new(),
+              ?assertEqual(ok, mqtree:register(Name, T)),
+              [Name|Acc]
       end, [], lists:reverse(Names)),
     lists:foldl(
       fun(_, [Name|Acc]) ->
-	      ?assertEqual(ok, mqtree:unregister(Name)),
-	      ?assertEqual(Acc, lists:sort(mqtree:registered())),
-	      Acc
+              ?assertEqual(ok, mqtree:unregister(Name)),
+              ?assertEqual(Acc, lists:sort(mqtree:registered())),
+              Acc
       end, Names, Names).
 
 %%%===================================================================
@@ -304,8 +304,8 @@ rand_paths(Set) ->
 rand_funs() ->
     lists:flatmap(
       fun(_) ->
-	      I = p1_rand:uniform(5),
-	      Inserts = lists:duplicate(I, insert),
-	      Deletes = lists:duplicate(I, delete),
-	      Inserts ++ Deletes
+              I = p1_rand:uniform(5),
+              Inserts = lists:duplicate(I, insert),
+              Deletes = lists:duplicate(I, delete),
+              Inserts ++ Deletes
       end, [1,2,3,4,5]).
