@@ -58,15 +58,15 @@ static ErlNifRWLock *registry_lock = NULL;
  *                   MQTT Tree Manipulation                     *
  ****************************************************************/
 tree_t *tree_new(char *key, size_t len) {
-  tree_t *tree = malloc(sizeof(tree_t));
+  tree_t *tree = enif_alloc(sizeof(tree_t));
   if (tree) {
     memset(tree, 0, sizeof(tree_t));
     if (key && len) {
-      tree->key = malloc(len);
+      tree->key = enif_alloc(len);
       if (tree->key) {
 	memcpy(tree->key, key, len);
       } else {
-	free(tree);
+	enif_free(tree);
 	tree = NULL;
       }
     }
@@ -77,14 +77,14 @@ tree_t *tree_new(char *key, size_t len) {
 void tree_free(tree_t *t) {
   tree_t *found, *iter;
   if (t) {
-    free(t->key);
-    free(t->val);
+    enif_free(t->key);
+    enif_free(t->val);
     HASH_ITER(hh, t->sub, found, iter) {
       HASH_DEL(t->sub, found);
       tree_free(found);
     }
     memset(t, 0, sizeof(tree_t));
-    free(t);
+    enif_free(t);
   }
 }
 
@@ -114,21 +114,21 @@ int tree_add(tree_t *root, char *path, size_t size) {
 	HASH_ADD_STR(t->sub, key, new);
 	i += len;
 	t = new;
-      } else {
-	free(path);
+      } else
 	return errno;
-      }
     }
   }
 
-  if (t->val) {
-    free(path);
-  } else {
-    for (i=0; i<size; i++) {
-      if (!path[i])
-	path[i] = '/';
-    }
-    t->val = path;
+  if (!t->val) {
+    t->val = enif_alloc(size+1);
+    if (t->val) {
+      t->val[size] = 0;
+      for (i=0; i<size; i++) {
+	char c = path[i];
+	t->val[i] = c ? c : '/';
+      }
+    } else
+      return errno;
   }
   t->refc++;
   return 0;
@@ -150,7 +150,7 @@ int tree_del(tree_t *root, char *path, size_t i, size_t size) {
   } else if (root->refc) {
     root->refc--;
     if (!root->refc) {
-      free(root->val);
+      enif_free(root->val);
       root->val = NULL;
     }
   }
@@ -185,47 +185,49 @@ int tree_refc(tree_t *tree, char *path, size_t i, size_t size) {
 /****************************************************************
  *                        Registration                          *
  ****************************************************************/
+void delete_registry_entry(registry_t *entry) {
+  /* registry_lock must be RW-locked! */
+  HASH_DEL(registry, entry);
+  entry->state->name = NULL;
+  enif_release_resource(entry->state);
+  enif_free(entry->name);
+  enif_free(entry);
+}
+
 int register_tree(char *name, state_t *state) {
   registry_t *entry, *found;
-  int ret;
 
-  entry = malloc(sizeof(registry_t));
-  if (entry) {
-    entry->name = malloc(strlen(name) + 1);
-    entry->state = state;
-    if (entry->name) {
-      strcpy(entry->name, name);
-      enif_rwlock_rwlock(registry_lock);
-      HASH_FIND_STR(registry, name, found);
-      if (found) {
-	free(entry->name);
-	free(entry);
-	ret = EINVAL;
-      } else {
-	if (state->name) {
-	  /* Unregistering previously registered name */
-	  HASH_FIND_STR(registry, state->name, found);
-	  if (found) {
-	    HASH_DEL(registry, found);
-	    enif_release_resource(state);
-	    free(found->name);
-	    free(found);
-	  }
-	}
-	enif_keep_resource(state);
-	HASH_ADD_STR(registry, name, entry);
-	state->name = entry->name;
-	ret = 0;
-      }
-      enif_rwlock_rwunlock(registry_lock);
-    } else {
-      free(entry);
-      ret = ENOMEM;
+  entry = enif_alloc(sizeof(registry_t));
+  if (!entry) return ENOMEM;
+  
+  entry->name = enif_alloc(strlen(name) + 1);
+  if (!entry->name) {
+    free(entry);
+    return ENOMEM;
+  }
+
+  entry->state = state;
+  strcpy(entry->name, name);
+  enif_rwlock_rwlock(registry_lock);
+  HASH_FIND_STR(registry, name, found);
+  if (found) {
+    enif_rwlock_rwunlock(registry_lock);
+    enif_free(entry->name);
+    enif_free(entry);
+    return EINVAL;
+  } else {
+    if (state->name) {
+      /* Unregistering previously registered name */
+      HASH_FIND_STR(registry, state->name, found);
+      if (found)
+	delete_registry_entry(found);
     }
-  } else
-    ret = ENOMEM;
-
-  return ret;
+    enif_keep_resource(state);
+    HASH_ADD_STR(registry, name, entry);
+    state->name = entry->name;
+    enif_rwlock_rwunlock(registry_lock);
+    return 0;
+  }
 }
 
 int unregister_tree(char *name) {
@@ -235,11 +237,7 @@ int unregister_tree(char *name) {
   enif_rwlock_rwlock(registry_lock);
   HASH_FIND_STR(registry, name, entry);
   if (entry) {
-    HASH_DEL(registry, entry);
-    entry->state->name = NULL;
-    enif_release_resource(entry->state);
-    free(entry->name);
-    free(entry);
+    delete_registry_entry(entry);
     ret = 0;
   } else {
     ret = EINVAL;
@@ -346,19 +344,15 @@ static ERL_NIF_TERM raise(ErlNifEnv *env, int err)
   }
 }
 
-static char *prep_path(ErlNifBinary *bin) {
+void prep_path(char *path, ErlNifBinary *bin) {
   int i;
   unsigned char c;
-  char *buf = malloc(bin->size+1);
-  if (buf) {
-    buf[bin->size] = 0;
-    for (i=0; i<bin->size; i++) {
-      c = bin->data[i];
-      if (c == '/') buf[i] = 0;
-      else buf[i] = c;
-    }
+  path[bin->size] = 0;
+  for (i=0; i<bin->size; i++) {
+    c = bin->data[i];
+    if (c == '/') path[i] = 0;
+    else path[i] = c;
   }
-  return buf;
 }
 
 /****************************************************************
@@ -428,7 +422,6 @@ static ERL_NIF_TERM insert_2(ErlNifEnv* env, int argc,
 {
   state_t *state;
   ErlNifBinary path_bin;
-  ERL_NIF_TERM result;
 
   if (!enif_get_resource(env, argv[0], tree_state_t, (void *) &state) ||
       !enif_inspect_iolist_as_binary(env, argv[1], &path_bin))
@@ -437,19 +430,16 @@ static ERL_NIF_TERM insert_2(ErlNifEnv* env, int argc,
   if (!path_bin.size)
     return enif_make_atom(env, "ok");
 
-  char *path = prep_path(&path_bin);
-  if (path) {
-    enif_rwlock_rwlock(state->lock);
-    int ret = tree_add(state->tree, path, path_bin.size);
-    enif_rwlock_rwunlock(state->lock);
-    if (!ret)
-      result = enif_make_atom(env, "ok");
-    else
-      result = raise(env, ENOMEM);
-  } else
-    result = raise(env, ENOMEM);
+  char path[path_bin.size+1];
+  prep_path(path, &path_bin);
+  enif_rwlock_rwlock(state->lock);
+  int ret = tree_add(state->tree, path, path_bin.size);
+  enif_rwlock_rwunlock(state->lock);
 
-  return result;
+  if (!ret)
+    return enif_make_atom(env, "ok");
+  else
+    return raise(env, ret);
 }
 
 static ERL_NIF_TERM delete_2(ErlNifEnv* env, int argc,
@@ -457,7 +447,6 @@ static ERL_NIF_TERM delete_2(ErlNifEnv* env, int argc,
 {
   state_t *state;
   ErlNifBinary path_bin;
-  ERL_NIF_TERM result;
 
   if (!enif_get_resource(env, argv[0], tree_state_t, (void *) &state) ||
       !enif_inspect_iolist_as_binary(env, argv[1], &path_bin))
@@ -466,17 +455,13 @@ static ERL_NIF_TERM delete_2(ErlNifEnv* env, int argc,
   if (!path_bin.size)
     return enif_make_atom(env, "ok");
 
-  char *path = prep_path(&path_bin);
-  if (path) {
-    enif_rwlock_rwlock(state->lock);
-    tree_del(state->tree, path, 0, path_bin.size);
-    enif_rwlock_rwunlock(state->lock);
-    free(path);
-    result = enif_make_atom(env, "ok");
-  } else
-    result = raise(env, ENOMEM);
+  char path[path_bin.size+1];
+  prep_path(path, &path_bin);
+  enif_rwlock_rwlock(state->lock);
+  tree_del(state->tree, path, 0, path_bin.size);
+  enif_rwlock_rwunlock(state->lock);
 
-  return result;
+  return enif_make_atom(env, "ok");
 }
 
 static ERL_NIF_TERM match_2(ErlNifEnv* env, int argc,
@@ -493,14 +478,11 @@ static ERL_NIF_TERM match_2(ErlNifEnv* env, int argc,
   if (!path_bin.size)
     return result;
 
-  char *path = prep_path(&path_bin);
-  if (path) {
-    enif_rwlock_rlock(state->lock);
-    match(env, state->tree, path, 0, path_bin.size, &result);
-    enif_rwlock_runlock(state->lock);
-    free(path);
-  } else
-    result = raise(env, ENOMEM);
+  char path[path_bin.size+1];
+  prep_path(path, &path_bin);
+  enif_rwlock_rlock(state->lock);
+  match(env, state->tree, path, 0, path_bin.size, &result);
+  enif_rwlock_runlock(state->lock);
 
   return result;
 }
@@ -518,15 +500,13 @@ static ERL_NIF_TERM refc_2(ErlNifEnv* env, int argc,
   if (!path_bin.size)
     return enif_make_int(env, 0);
 
-  char *path = prep_path(&path_bin);
-  if (path) {
-    enif_rwlock_rlock(state->lock);
-    int refc = tree_refc(state->tree, path, 0, path_bin.size);
-    enif_rwlock_runlock(state->lock);
-    free(path);
-    return enif_make_int(env, refc);
-  } else
-    return raise(env, ENOMEM);
+  char path[path_bin.size+1];
+  prep_path(path, &path_bin);
+  enif_rwlock_rlock(state->lock);
+  int refc = tree_refc(state->tree, path, 0, path_bin.size);
+  enif_rwlock_runlock(state->lock);
+
+  return enif_make_int(env, refc);
 }
 
 static ERL_NIF_TERM clear_1(ErlNifEnv* env, int argc,
