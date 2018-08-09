@@ -603,6 +603,9 @@ static ERL_NIF_TERM register_2(ErlNifEnv* env, int argc,
 
   char name[len+1];
   enif_get_atom(env, argv[0], name, len+1, ERL_NIF_LATIN1);
+  if (len == 9 && !memcmp(name, "undefined", 9))
+    return raise(env, EINVAL);
+
   ret = register_tree(name, state);
   if (ret)
     return raise(env, ret);

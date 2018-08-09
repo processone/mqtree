@@ -29,6 +29,10 @@ $ make
 Creates new tree. Note that the tree is mutable just like ETS.
 The created tree gets destroyed when it's garbage collected.
 
+**NOTE**: a registered tree (see [register/2](#register2)) is
+not a subject for garbage collection until [unregister/1](#unregister1)
+is called **explicitly**.
+
 ## insert/2
 ```erlang
 -spec insert(Tree :: tree(), Filter :: iodata()) -> ok.
@@ -93,3 +97,34 @@ tree (irrespective of their reference counters).
 -spec is_empty(Tree :: tree()) -> boolean().
 ```
 Returns `true` if `Tree` holds no filters. Returns `false` otherwise.
+
+## register/2
+```erlang
+-spec register(RegName :: atom(), Tree :: tree()) -> ok.
+```
+Associates `RegName` with `Tree`. The tree is then available via call
+to [whereis/1](#whereis1). Fails with `badarg` exception if:
+
+- `RegName` is already in use (even by the tree being registered)
+- `RegName` is atom `undefined`
+- Either `RegName` or `Tree` has invalid type
+
+It is safe to register already registered tree to another name. In this
+case the old name will be freed automatically.
+
+**NOTE**: a registered tree is not a subject for garbage collection.
+You must call [unregister/1](#unregister1) **explicitly** if you want
+the tree to be freed by garbage collector.
+
+## unregister/1
+```erlang
+-spec unregister(RegName :: atom()) -> ok.
+```
+Removes the registered name `RegName` associated with a tree.
+Fails with `badarg` exception if `RegName` is not a registered name.
+
+## whereis/1
+```erlang
+-spec whereis(RegName :: atom()) -> Tree :: tree() | undefined.
+```
+Returns `Tree` with registered name `RegName`. Returns `undefined` otherwise.

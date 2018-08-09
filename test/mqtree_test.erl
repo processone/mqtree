@@ -232,10 +232,17 @@ register_test() ->
     ?assertEqual(T, mqtree:whereis(test_tree)),
     ?assertEqual(ok, mqtree:unregister(test_tree)).
 
-double_register_test() ->
+double_register_same_tree_test() ->
     T = mqtree:new(),
     ?assertEqual(ok, mqtree:register(test_tree, T)),
     ?assertError(badarg, mqtree:register(test_tree, T)),
+    ?assertEqual(ok, mqtree:unregister(test_tree)).
+
+double_register_another_tree_test() ->
+    T1 = mqtree:new(),
+    T2 = mqtree:new(),
+    ?assertEqual(ok, mqtree:register(test_tree, T1)),
+    ?assertError(badarg, mqtree:register(test_tree, T2)),
     ?assertEqual(ok, mqtree:unregister(test_tree)).
 
 unregister_test() ->
@@ -258,6 +265,10 @@ rename_test() ->
     ?assertError(badarg, mqtree:unregister(test_tree_1)),
     ?assertEqual(T, mqtree:whereis(test_tree_2)),
     ?assertEqual(ok, mqtree:unregister(test_tree_2)).
+
+register_undefined_test() ->
+    T = mqtree:new(),
+    ?assertError(badarg, mqtree:register(undefined, T)).
 
 registered_test() ->
     Names = [list_to_atom("test_tree_" ++ integer_to_list(I))
