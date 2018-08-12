@@ -285,14 +285,16 @@ static void match(ErlNifEnv *env, tree_t *root,
       len = strlen(path+i) + 1;
       match(env, found, path, i+len, size, acc);
     };
-    HASH_FIND_STR(root->sub, "+", found);
-    if (found) {
-      len = strlen(path+i) + 1;
-      match(env, found, path, i+len, size, acc);
-    }
-    HASH_FIND_STR(root->sub, "#", found);
-    if (found) {
-      *acc = cons(env, found->val, *acc);
+    if (i || path[0] != '$') {
+      HASH_FIND_STR(root->sub, "+", found);
+      if (found) {
+	len = strlen(path+i) + 1;
+	match(env, found, path, i+len, size, acc);
+      }
+      HASH_FIND_STR(root->sub, "#", found);
+      if (found) {
+	*acc = cons(env, found->val, *acc);
+      }
     }
   } else {
     *acc = cons(env, root->val, *acc);

@@ -220,6 +220,13 @@ match_plus_test() ->
     ?assertEqual([<<"+/+">>, <<"+/b">>], mqtree:match(T, "x/b")),
     ?assertEqual(Filter, lists:sort(mqtree:match(T, "a/b"))).
 
+'match_begins_with_$_test'() ->
+    T = mqtree:new(),
+    Filters = ["#", "+", "+/", "+/+"],
+    Topics = [<<"$SYS">>, <<"$SYS/some">>, <<"$">>, <<"$/some">>],
+    lists:foreach(fun(P) -> ?assertInsert(P) end, Filters ++ Topics),
+    lists:foreach(fun(P) -> ?assertEqual([P], mqtree:match(T, P)) end, Topics).
+
 whereis_non_existent_test() ->
     ?assertEqual(undefined, mqtree:whereis(test_tree)).
 

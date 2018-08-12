@@ -82,6 +82,9 @@ make filter "deduplication" during subscription registration, e.g. filters
 it's up to the caller to check if the path conforms to the MQTT
 specification.
 
+**NOTE**: any path starting with `$` won't match filters starting with
+`+` or `#`. This is in accordance with the MQTT specification.
+
 ## refc/2
 ```erlang
 -spec refc(Tree :: tree(), Filter :: iodata()) -> non_neg_intger().
