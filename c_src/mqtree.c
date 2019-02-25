@@ -1,24 +1,18 @@
 /*
- * ejabberd Business Edition, Copyright (C) 2002-2018   ProcessOne
+ * @author Evgeny Khramtsov <ekhramtsov@process-one.net>
+ * @copyright (C) 2002-2019 ProcessOne, SARL. All Rights Reserved.
  *
- * The ejabberd software is the exclusive property of the licensor
- * ProcessOne. It is protected by the law on copyright and
- * international conventions. As a result, the dealer
- * recognizes that will make every effort to ensure the confidentiality
- * on the software. It is recalled that a violation of the rights of
- * authors of the software is an infringement and that any
- * counterfeit is punishable in France by Article L339-2 of the Code of
- * Intellectual property and punishable by three years imprisonment and
- * 300000 euros.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Any infringement liable to be so qualified and
- * would be caused by third parties and whose dealer has knowledge
- * should be terminated by the licensor that it will make its case
- * personal conduct of the proceedings. Any allegation of infringement
- * formed against the dealer because of the use of the Software will
- * be brought to the knowledge of the licensor which will assist
- * in defense of the dealer in the manner and form that
- * see fit and fix alone.
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  */
 
@@ -208,7 +202,7 @@ int register_tree(char *name, state_t *state) {
 
   entry = enif_alloc(sizeof(registry_t));
   if (!entry) return ENOMEM;
-  
+
   entry->name = enif_alloc(strlen(name) + 1);
   if (!entry->name) {
     free(entry);
