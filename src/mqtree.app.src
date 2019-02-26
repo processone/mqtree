@@ -24,6 +24,8 @@
   {env, []},
 
   %% hex.pm packaging:
+  {files, ["src/", "c_src/*.c", "c_src/*.h", "rebar.config",
+	   "rebar.config.script", "README.md", "LICENSE"]},
   {licenses, ["Apache 2.0"]},
   {links, [{"Github", "https://github.com/processone/mqtree"}]}
  ]}.
