@@ -74,7 +74,10 @@ insert_then_delete_empty_test() ->
     ?assertDelete(<<>>),
     ?assertTree([{Path, 1}]).
 
-insert_then_delete_shuffle_test() ->
+insert_then_delete_shuffle_test_() ->
+    {timeout, 60, fun insert_then_delete_shuffle/0}.
+
+insert_then_delete_shuffle() ->
     T = mqtree:new(),
     Check = lists:sort(rand_paths()),
     lists:foldl(
