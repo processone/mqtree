@@ -44,7 +44,7 @@ dialyzer/deps.plt:
 dialyzer/mqtree.plt:
 	@mkdir -p dialyzer
 	@dialyzer --build_plt --output_plt dialyzer/mqtree.plt \
-	-o dialyzer/ejabberd.log ebin; \
+	-o dialyzer/mqtree.log ebin; \
 	status=$$? ; if [ $$status -ne 2 ]; then exit $$status; else exit 0; fi
 
 erlang_plt: dialyzer/erlang.plt
@@ -56,7 +56,7 @@ deps_plt: dialyzer/deps.plt
 	status=$$? ; if [ $$status -ne 2 ]; then exit $$status; else exit 0; fi
 
 mqtree_plt: dialyzer/mqtree.plt
-	@dialyzer --plt dialyzer/mqtree.plt --check_plt -o dialyzer/ejabberd.log; \
+	@dialyzer --plt dialyzer/mqtree.plt --check_plt -o dialyzer/mqtree.log; \
 	status=$$? ; if [ $$status -ne 2 ]; then exit $$status; else exit 0; fi
 
 dialyzer: erlang_plt deps_plt mqtree_plt
