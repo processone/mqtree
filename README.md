@@ -15,7 +15,7 @@ To compile mqtree you need:
 # Compiling
 
 ```
-$ git clone ssh://git@git.process-one.net:7999/ebe/mqtree.git
+$ git clone https://github.com/processone/mqtree.git
 $ cd mqtree
 $ make
 ```
