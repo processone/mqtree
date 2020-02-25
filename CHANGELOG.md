@@ -1,3 +1,7 @@
+# Version 1.0.7
+
+* Update copyright year
+
 # Version 1.0.6
 
 * Updating p1_utils to version 1.0.17.
