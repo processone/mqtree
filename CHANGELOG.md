@@ -1,3 +1,8 @@
+# Version 1.0.9
+
+* Copy recent rebar.config.script from fast_tls
+* Add support for Travis and Erlang/OTP 23.0
+
 # Version 1.0.8
 
 * Updating p1_utils to version 1.0.19.
