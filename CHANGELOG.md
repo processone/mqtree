@@ -1,5 +1,6 @@
 # Version 1.0.11
 
+* Updating p1_utils to version 1.0.21.
 * Don't link with ssl/crypto libs
 
 # Version 1.0.10
