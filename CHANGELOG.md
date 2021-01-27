@@ -1,3 +1,7 @@
+# Version 1.0.12
+
+* Add missing applications to mqtree.app
+
 # Version 1.0.11
 
 * Updating p1_utils to version 1.0.21.
