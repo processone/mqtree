@@ -1,9 +1,12 @@
-REBAR=./rebar
+REBAR ?= ./rebar
+
+IS_REBAR3:=$(shell expr `$(REBAR) --version | awk -F '[ .]' '/rebar / {print $$2}'` '>=' 3)
 
 all: src
 
 src:
-	$(REBAR) get-deps compile
+	$(REBAR) get-deps
+	$(REBAR) compile
 
 clean:
 	$(REBAR) clean
@@ -12,21 +15,33 @@ distclean: clean
 	rm -f config.status
 	rm -f config.log
 	rm -rf autom4te.cache
+	rm -rf _build
 	rm -rf deps
 	rm -rf ebin
+	rm -f rebar.lock
+	rm -f test/*.beam
 	rm -rf priv
 	rm -f vars.config
 	rm -f compile_commands.json
 	rm -rf dialyzer
 
+ifeq "$(IS_REBAR3)" "1"
+test:
+	$(REBAR) eunit -v
+else
 test: all
 	mkdir -p .eunit/priv/lib
 	cp priv/lib/mqtree.* .eunit/priv/lib/
 	$(REBAR) -v skip_deps=true eunit
+endif
 
 xref: all
-	$(REBAR) skip_deps=true xref
+	$(REBAR) xref
 
+ifeq "$(IS_REBAR3)" "1"
+dialyzer:
+	$(REBAR) dialyzer
+else
 deps := $(wildcard deps/*/ebin)
 
 dialyzer/erlang.plt:
@@ -63,6 +78,7 @@ dialyzer: erlang_plt deps_plt mqtree_plt
 	@dialyzer --plts dialyzer/*.plt --no_check_plt \
 	--get_warnings -o dialyzer/error.log ebin; \
 	status=$$? ; if [ $$status -ne 2 ]; then exit $$status; else exit 0; fi
+endif
 
 check-syntax:
 	gcc -o nul -S ${CHK_SOURCES}
