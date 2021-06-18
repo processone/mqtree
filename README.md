@@ -1,6 +1,10 @@
 mqtree: Index tree for MQTT topic filters
 ====================================================
 
+[![CI](https://github.com/processone/mqtree/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/processone/mqtree/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/processone/mqtree/badge.svg?branch=master&service=github)](https://coveralls.io/github/processone/mqtree?branch=master)
+[![Hex version](https://img.shields.io/hexpm/v/mqtree.svg "Hex version")](https://hex.pm/packages/mqtree)
+
 mqtree is an Erlang NIF implementation of N-ary tree to keep MQTT
 topic filters for efficient matching.
 

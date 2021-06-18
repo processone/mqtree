@@ -98,6 +98,11 @@ to_list(_Tree) ->
 %%% Internal functions
 %%%===================================================================
 load_nif() ->
+    case os:getenv("COVERALLS") of
+        "true" -> ok;
+        _ -> load_nif2()
+    end.
+load_nif2() ->
     Path = p1_nif_utils:get_so_path(?MODULE, [?MODULE], atom_to_list(?MODULE)),
     case erlang:load_nif(Path, 0) of
         ok -> ok;
