@@ -1,3 +1,7 @@
+# Version 1.0.15
+
+* Updating p1_utils to version 1.0.25.
+
 # Version 1.0.14
 
 * Updating p1_utils to version 1.0.23.

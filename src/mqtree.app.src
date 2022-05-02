@@ -18,7 +18,7 @@
 {application, mqtree,
  [
   {description, "Index tree for MQTT topic filters"},
-  {vsn, "1.0.14"},
+  {vsn, "1.0.15"},
   {registered, []},
   {applications, [kernel, stdlib, p1_utils]},
   {env, []},
