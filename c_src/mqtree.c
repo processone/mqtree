@@ -205,7 +205,7 @@ int register_tree(char *name, state_t *state) {
 
   entry->name = enif_alloc(strlen(name) + 1);
   if (!entry->name) {
-    free(entry);
+    enif_free(entry);
     return ENOMEM;
   }
 
